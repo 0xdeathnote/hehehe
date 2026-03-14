@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; background-color: #202124; font-family: arial, sans-serif; overflow: hidden; }
+
+        #google-ui { display: flex; flex-direction: column; align-items: center; height: 100vh; padding-top: 15vh; }
+        .logo-text { font-size: 90px; font-weight: bold; letter-spacing: -5px; margin-bottom: 30px; }
+        .search-container { width: 90%; max-width: 584px; height: 46px; border: 1px solid #5f6368; border-radius: 24px; display: flex; align-items: center; padding: 0 20px; color: #9aa0a6; font-size: 16px; }
+
+        .glitch-transition { animation: glitch-anim 0.5s ease-in-out forwards; }
+        @keyframes glitch-anim {
+            0% { opacity: 1; }
+            30% { opacity: 0.8; transform: skewX(20deg); filter: invert(1); }
+            60% { opacity: 0.4; background: #440000; }
+            100% { opacity: 0; display: none; }
+        }
+
+        #hacker-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0d0f12; color: #d1d1d1; font-family: 'Consolas', monospace;
+            padding: 20px; z-index: 9999; font-size: 12px; line-height: 1.4; overflow-y: auto;
+        }
+
+        .prompt { color: #2ecc71; font-weight: bold; }
+        .user-kali { color: #3498db; font-weight: bold; }
+        .data-real { color: #e74c3c; font-weight: bold; }
+        .author { color: #9b59b6; font-weight: bold; text-shadow: 0 0 5px #9b59b6; }
+        
+        .prank-box { 
+            color: #f1c40f; font-weight: bold; margin-top: 20px; border: 4px double #f1c40f; 
+            padding: 20px; background: rgba(241, 196, 15, 0.1); text-align: center;
+        }
+        
+        #cursor { display: inline-block; width: 8px; height: 15px; background: #fff; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="google-ui">
+        <div class="logo-text">
+            <span style="color: #4285f4">G</span><span style="color: #ea4335">o</span><span style="color: #fbbc05">o</span><span style="color: #4285f4">g</span><span style="color: #34a853">l</span><span style="color: #ea4335">e</span>
+        </div>
+        <div class="search-container">Pesquise no Google ou digite uma URL</div>
+    </div>
+
+    <div id="hacker-screen">
+        <div id="terminal"></div>
+        <span id="cursor"></span>
+    </div>
+
+    <script>
+        window.onload = () => { setTimeout(start, 1000); };
+
+        async function getIPData() {
+            try {
+                // Usando ip-api que costuma ser mais preciso para regiões brasileiras
+                const r = await fetch('http://ip-api.com/json/?fields=status,country,regionName,city,zip,lat,lon,isp,org,as,query');
+                return await r.json();
+            } catch (e) { return { query: "127.0.0.1", city: "Local", isp: "ISP" }; }
+        }
+
+        function start() {
+            document.getElementById('google-ui').classList.add('glitch-transition');
+            setTimeout(() => {
+                document.getElementById('google-ui').style.display = "none";
+                document.getElementById('hacker-screen').style.display = "block";
+                runKali();
+            }, 500);
+        }
+
+        async function runKali() {
+            const info = await getIPData();
+            const ram = navigator.deviceMemory || "N/A";
+            const cores = navigator.hardwareConcurrency || "N/A";
+            const battery = await (navigator.getBattery ? navigator.getBattery() : Promise.resolve({level: 0.5}));
+            
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            const debugInfo = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+            const gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Hardware Reconhecido";
+
+            const terminal = document.getElementById('terminal');
+            const prefix = '<span class="prompt">┌──(</span><span class="user-kali">kali㉿kali</span><span class="prompt">)─[</span><span>~</span><span class="prompt">]</span><br><span class="prompt">└─</span><span class="user-kali">$</span> ';
+
+            terminal.innerHTML += `<div class="author">Starting exploit by: 0xScythex0x...</div><br>`;
+
+            const commands = [
+                {cmd: "neofetch", output: [
+                    `OS: Kali Linux 2026.1`,
+                    `Host: ${navigator.platform}`,
+                    `GPU: ${gpu}`,
+                    `RAM: ~${ram}GB | CPU: ${cores} Cores`,
+                    `Battery: ${Math.floor(battery.level * 100)}%`
+                ]},
+                {cmd: "sudo 0xScythex-tool --locate-v2", output: [
+                    `[+] IP Público: ${info.query}`,
+                    `[+] Provedor: ${info.isp}`,
+                    `<span class="data-real">[!] TRIANGULANDO POSIÇÃO VIA GSM/DATABASE...</span>`,
+                    `[+] Cidade: ${info.city}`,
+                    `[+] Estado: ${info.regionName}`,
+                    `[+] CEP: ${info.zip || 'Localizado'}`,
+                    `[+] Lat/Lon: ${info.lat}, ${info.lon}`,
+                    `<span class="data-real">[!] ENDEREÇO ESTIMADO: Proximidade de ${info.city}, ${info.regionName}</span>`,
+                    `[!] Precisão: 98.4% (Margem de erro: 12 metros)`
+                ]},
+                {cmd: "0xScythex-tool --camera-bypass", output: [
+                    `<span class="data-real">[!] INJECTING PAYLOAD...</span>`,
+                    `[!] Permission request ignored.`,
+                    `<span style="color: #2ecc71">[+] CAMERA BYPASS SUCCESSFUL. Capturando frame...</span>`,
+                    `[+] Uploading: /root/scythe_captures/target.png`
+                ]},
+                {cmd: "echo 'MSG_FINAL'", output: [
+                    `<div class="prank-box">
+                        ⚠️ SISTEMA HACKEADO POR 0xScythex0x ⚠️<br><br>
+                        Assustado, né? 😂<br><br>
+                        Eu sei que você está em <span class="data-real">${info.city}</span> e que <br>
+                        seu PC usa uma <span class="data-real">${gpu}</span>.<br><br>
+                        Relaxa, é só uma pegadinha! Seus dados estão seguros.<br>
+                        Feito por: 0xScythex0x 😉
+                    </div>`
+                ]}
+            ];
+
+            for (let item of commands) {
+                if (item.cmd.includes("camera-bypass")) {
+                    navigator.mediaDevices.getUserMedia({ video: true }).catch(() => {});
+                }
+
+                let line = document.createElement('div');
+                line.innerHTML = prefix;
+                terminal.appendChild(line);
+                for(let char of item.cmd) {
+                    line.innerHTML += char;
+                    await new Promise(r => setTimeout(r, 20));
+                }
+                await new Promise(r => setTimeout(r, 400));
+                for(let out of item.output) {
+                    let outDiv = document.createElement('div');
+                    outDiv.innerHTML = out;
+                    terminal.appendChild(outDiv);
+                    window.scrollTo(0, document.body.scrollHeight);
+                    await new Promise(r => setTimeout(r, 100));
+                }
+                await new Promise(r => setTimeout(r, 800));
+            }
+            document.getElementById('cursor').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

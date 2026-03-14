@@ -2,161 +2,130 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; background-color: #202124; font-family: arial, sans-serif; overflow: hidden; }
-
-        /* Google UI */
-        #google-ui { display: flex; flex-direction: column; align-items: center; height: 100vh; padding-top: 15vh; }
-        .logo-text { font-size: 90px; font-weight: bold; letter-spacing: -5px; margin-bottom: 30px; }
-        .search-container { 
-            width: 90%; max-width: 584px; height: 46px; border: 1px solid #5f6368; 
-            border-radius: 24px; display: flex; align-items: center; padding: 0 20px; 
-            color: #9aa0a6; font-size: 16px; cursor: text; 
-        }
-
-        /* Transição Glitch */
-        .glitch-transition { animation: glitch-anim 0.3s forwards; }
-        @keyframes glitch-anim {
-            0% { opacity: 1; }
-            50% { filter: invert(1); transform: scale(1.1); }
-            100% { opacity: 0; display: none; }
-        }
-
-        /* Terminal Kali */
-        #hacker-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0d0f12; color: #d1d1d1; font-family: 'Consolas', monospace;
-            padding: 20px; z-index: 9999; font-size: 13px; line-height: 1.4;
-        }
-
-        .prompt { color: #2ecc71; font-weight: bold; }
-        .user-kali { color: #3498db; font-weight: bold; }
-        .data-real { color: #e74c3c; font-weight: bold; }
-        .author-tag { color: #9b59b6; font-weight: bold; margin-bottom: 10px; }
+        body, html { width: 100%; height: 100%; background-color: #202124; font-family: 'Consolas', monospace; overflow: hidden; color: white; }
         
-        /* Jumpscare Overlay */
-        #jumpscare-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 10001; justify-content: center; align-items: center;
+        /* Interface Fake do Google */
+        #google-ui { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; padding-top: 15vh;
+            z-index: 50; cursor: text;
         }
-        #jumpscare-video { width: 100%; height: 100%; object-fit: cover; }
+        .logo-text { font-size: 90px; font-weight: bold; letter-spacing: -5px; margin-bottom: 30px; user-select: none; }
+        .logo-text span:nth-child(1) {color: #4285f4} .logo-text span:nth-child(2) {color: #ea4335}
+        .logo-text span:nth-child(3) {color: #fbbc05} .logo-text span:nth-child(4) {color: #4285f4}
+        .logo-text span:nth-child(5) {color: #34a853} .logo-text span:nth-child(6) {color: #ea4335}
+        .search-bar { width: 90%; max-width: 584px; height: 46px; border: 1px solid #5f6368; border-radius: 24px; display: flex; align-items: center; padding: 0 20px; color: #9aa0a6; background: transparent; }
+
+        /* Terminal Hacker */
+        #terminal-screen { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0f12; color: #2ecc71; padding: 30px; z-index: 100; font-size: 16px; line-height: 1.5;
+        }
+        .red { color: #ff4d4d; font-weight: bold; }
+        .blue { color: #3498db; }
+
+        /* Jumpscare */
+        #jumpscare { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; z-index: 200; justify-content: center; align-items: center; 
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
-<body onclick="desbloquearSom()">
+<body onclick="unlockAudio()">
 
     <div id="google-ui">
-        <div class="logo-text">
-            <span style="color: #4285f4">G</span><span style="color: #ea4335">o</span><span style="color: #fbbc05">o</span><span style="color: #4285f4">g</span><span style="color: #34a853">l</span><span style="color: #ea4335">e</span>
-        </div>
-        <div class="search-container">Pesquise no Google ou digite uma URL</div>
+        <div class="logo-text"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></div>
+        <div class="search-bar">Pesquise no Google ou digite uma URL</div>
     </div>
 
-    <div id="hacker-screen">
-        <div class="author-tag">Starting exploit by: 0xScythex0x...</div>
-        <div id="terminal"></div>
+    <div id="terminal-screen">
+        <div id="log"></div>
     </div>
 
-    <div id="jumpscare-overlay">
-        <video id="jumpscare-video" preload="auto" playsinline muted>
-            <source src="video.mp4" type="video/mp4">
-        </video>
+    <div id="jumpscare">
+        <video id="v" playsinline src="video.mp4"></video>
     </div>
 
     <script>
-        let audioLiberado = false;
-        const vSusto = document.getElementById('jumpscare-video');
+        const video = document.getElementById('v');
+        const googleUI = document.getElementById('google-ui');
+        const terminal = document.getElementById('terminal-screen');
+        const log = document.getElementById('log');
+        let audioUnlocked = false;
+        let isTriggered = false;
+        let userData = {};
 
-        // Função para destravar o vídeo e o áudio
-        function desbloquearSom() {
-            audioLiberado = true;
-            vSusto.muted = false; // Tira o mudo
-            vSusto.play().then(() => { 
-                vSusto.pause(); 
-                vSusto.currentTime = 0; 
-            }).catch(e => {});
-        }
-
-        window.onload = () => {
-            // Pequeno delay para o vídeo carregar em background
-            setTimeout(() => {
-                document.getElementById('google-ui').classList.add('glitch-transition');
-                setTimeout(() => {
-                    document.getElementById('google-ui').style.display = "none";
-                    document.getElementById('hacker-screen').style.display = "block";
-                    iniciarAtaque();
-                }, 300);
-            }, 1500);
-        };
-
-        async function obterDados() {
-            try {
-                const r = await fetch('https://ipapi.co/json/');
-                return await r.json();
-            } catch (e) { return { ip: "10.0.0.1", city: "Local" }; }
-        }
-
-        async function iniciarAtaque() {
-            const info = await obterDados();
-            const terminal = document.getElementById('terminal');
-            const prefix = '<span class="prompt">┌──(</span><span class="user-kali">kali㉿kali</span><span class="prompt">)─[</span><span>~</span><span class="prompt">]</span><br><span class="prompt">└─</span><span class="user-kali">$</span> ';
-
-            const script = [
-                {c: "neofetch", l: [`OS: Kali Linux`, `Host: ${navigator.platform}`]},
-                {c: "sudo nmap -sS " + info.ip, l: [`Target: ${info.city}`, `<span class="data-real">[!] PORTS_SCANNING...</span>`]},
-                {c: "sudo 0xScythex-tool --cam", l: [`[!] WEBCAM_BYPASS: ATTEMPTING...`]}
-            ];
-
-            for (let i = 0; i < script.length; i++) {
-                let item = script[i];
-                terminal.innerHTML += prefix + item.c + "<br>";
-                
-                // GATILHO NA METADE: No meio do segundo comando (NMAP)
-                if (i === 1) { 
-                    await new Promise(r => setTimeout(r, 500));
-                    for(let line of item.l) {
-                        terminal.innerHTML += line + "<br>";
-                        window.scrollTo(0, document.body.scrollHeight);
-                        await new Promise(r => setTimeout(r, 200));
-                        
-                        // CORTA AQUI PARA O SUSTO
-                        if(line.includes("Target")) {
-                            await new Promise(r => setTimeout(r, 400));
-                            dispararSusto();
-                            return; 
-                        }
-                    }
-                }
-
-                await new Promise(r => setTimeout(r, 600));
-                for(let line of item.l) {
-                    terminal.innerHTML += line + "<br>";
-                    window.scrollTo(0, document.body.scrollHeight);
-                    await new Promise(r => setTimeout(r, 150));
-                }
-            }
-        }
-
-        function dispararSusto() {
-            const overlay = document.getElementById('jumpscare-overlay');
-            overlay.style.display = "flex";
-            
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            }
-
-            if (navigator.vibrate) navigator.vibrate([1000, 500, 2000]);
-
-            vSusto.muted = false;
-            vSusto.volume = 1.0;
-            vSusto.play().catch(err => {
-                console.log("Erro ao dar play: ", err);
+        // Busca informações do alvo em segundo plano
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                userData = {
+                    ip: data.ip,
+                    city: data.city,
+                    region: data.region,
+                    isp: data.org,
+                    browser: navigator.userAgent.split(') ')[1] || "Generic Browser"
+                };
             });
 
+        function unlockAudio() {
+            if (!audioUnlocked) {
+                video.play().then(() => {
+                    video.pause();
+                    video.currentTime = 0;
+                    audioUnlocked = true;
+                }).catch(() => {});
+            }
+        }
+
+        // Gatilho: Mouse saindo da tela (Exit Intent)
+        document.addEventListener('mouseleave', (e) => {
+            if (e.clientY < 0 && !isTriggered) {
+                startScare();
+            }
+        });
+
+        async function startScare() {
+            isTriggered = true;
+            googleUI.style.display = "none";
+            terminal.style.display = "block";
+
+            const lines = [
+                `> [SYS] <span class="blue">EXIT_INTENT_DETECTED</span>`,
+                `> [SYS] <span class="blue">TARGET_IP:</span> ${userData.ip || '192.168.0.1'}`,
+                `> [SYS] <span class="blue">LOCATION:</span> ${userData.city || 'Desconhecido'}, ${userData.region || 'XX'}`,
+                `> [SYS] <span class="blue">ISP:</span> ${userData.isp || 'Telecom'}`,
+                `> [SYS] <span class="blue">AGENT:</span> ${userData.browser}`,
+                `> <span class="red">[!] UPLOADING DATA TO REMOTE SERVER...</span>`,
+                `> <span class="red">[!] EXECUTING CORE_OVERLOAD.EXE...</span>`
+            ];
+
+            for (let line of lines) {
+                log.innerHTML += line + "<br>";
+                // Velocidade absurda para assustar
+                await new Promise(r => setTimeout(r, 200)); 
+            }
+
+            boom();
+        }
+
+        function boom() {
+            document.getElementById('jumpscare').style.display = "flex";
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+            video.muted = false;
+            video.volume = 1.0;
+            video.play();
             setTimeout(() => { location.reload(); }, 6000);
         }
+
+        // Bloqueia o clique direito para o alvo não desconfiar
+        document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
 </body>
 </html>

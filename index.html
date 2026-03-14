@@ -8,39 +8,44 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { width: 100%; height: 100%; background-color: #202124; font-family: arial, sans-serif; overflow: hidden; }
 
+        /* Google UI */
         #google-ui { display: flex; flex-direction: column; align-items: center; height: 100vh; padding-top: 15vh; }
         .logo-text { font-size: 90px; font-weight: bold; letter-spacing: -5px; margin-bottom: 30px; }
-        .search-container { width: 90%; max-width: 584px; height: 46px; border: 1px solid #5f6368; border-radius: 24px; display: flex; align-items: center; padding: 0 20px; color: #9aa0a6; font-size: 16px; }
+        .search-container { 
+            width: 90%; max-width: 584px; height: 46px; border: 1px solid #5f6368; 
+            border-radius: 24px; display: flex; align-items: center; padding: 0 20px; 
+            color: #9aa0a6; font-size: 16px; cursor: text; 
+        }
 
-        .glitch-transition { animation: glitch-anim 0.5s ease-in-out forwards; }
+        /* Transição Glitch */
+        .glitch-transition { animation: glitch-anim 0.3s forwards; }
         @keyframes glitch-anim {
             0% { opacity: 1; }
-            30% { opacity: 0.8; transform: skewX(20deg); filter: invert(1); }
-            60% { opacity: 0.4; background: #440000; }
+            50% { filter: invert(1); transform: scale(1.1); }
             100% { opacity: 0; display: none; }
         }
 
+        /* Terminal Kali */
         #hacker-screen {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #0d0f12; color: #d1d1d1; font-family: 'Consolas', monospace;
-            padding: 20px; z-index: 9999; font-size: 12px; line-height: 1.4; overflow-y: auto;
+            padding: 20px; z-index: 9999; font-size: 13px; line-height: 1.4;
         }
 
         .prompt { color: #2ecc71; font-weight: bold; }
         .user-kali { color: #3498db; font-weight: bold; }
         .data-real { color: #e74c3c; font-weight: bold; }
-        .author { color: #9b59b6; font-weight: bold; text-shadow: 0 0 5px #9b59b6; }
+        .author-tag { color: #9b59b6; font-weight: bold; margin-bottom: 10px; }
         
-        .prank-box { 
-            color: #f1c40f; font-weight: bold; margin-top: 20px; border: 4px double #f1c40f; 
-            padding: 20px; background: rgba(241, 196, 15, 0.1); text-align: center;
+        /* Jumpscare Overlay */
+        #jumpscare-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 10001; justify-content: center; align-items: center;
         }
-        
-        #cursor { display: inline-block; width: 8px; height: 15px; background: #fff; animation: blink 0.8s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        #jumpscare-video { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
-<body>
+<body onclick="desbloquearSom()">
 
     <div id="google-ui">
         <div class="logo-text">
@@ -50,106 +55,107 @@
     </div>
 
     <div id="hacker-screen">
+        <div class="author-tag">Starting exploit by: 0xScythex0x...</div>
         <div id="terminal"></div>
-        <span id="cursor"></span>
+    </div>
+
+    <div id="jumpscare-overlay">
+        <video id="jumpscare-video" preload="auto" playsinline muted>
+            <source src="video.mp4" type="video/mp4">
+        </video>
     </div>
 
     <script>
-        window.onload = () => { setTimeout(start, 1000); };
+        let audioLiberado = false;
+        const vSusto = document.getElementById('jumpscare-video');
 
-        async function getIPData() {
-            try {
-                // Usando ip-api que costuma ser mais preciso para regiões brasileiras
-                const r = await fetch('http://ip-api.com/json/?fields=status,country,regionName,city,zip,lat,lon,isp,org,as,query');
-                return await r.json();
-            } catch (e) { return { query: "127.0.0.1", city: "Local", isp: "ISP" }; }
+        // Função para destravar o vídeo e o áudio
+        function desbloquearSom() {
+            audioLiberado = true;
+            vSusto.muted = false; // Tira o mudo
+            vSusto.play().then(() => { 
+                vSusto.pause(); 
+                vSusto.currentTime = 0; 
+            }).catch(e => {});
         }
 
-        function start() {
-            document.getElementById('google-ui').classList.add('glitch-transition');
+        window.onload = () => {
+            // Pequeno delay para o vídeo carregar em background
             setTimeout(() => {
-                document.getElementById('google-ui').style.display = "none";
-                document.getElementById('hacker-screen').style.display = "block";
-                runKali();
-            }, 500);
+                document.getElementById('google-ui').classList.add('glitch-transition');
+                setTimeout(() => {
+                    document.getElementById('google-ui').style.display = "none";
+                    document.getElementById('hacker-screen').style.display = "block";
+                    iniciarAtaque();
+                }, 300);
+            }, 1500);
+        };
+
+        async function obterDados() {
+            try {
+                const r = await fetch('https://ipapi.co/json/');
+                return await r.json();
+            } catch (e) { return { ip: "10.0.0.1", city: "Local" }; }
         }
 
-        async function runKali() {
-            const info = await getIPData();
-            const ram = navigator.deviceMemory || "N/A";
-            const cores = navigator.hardwareConcurrency || "N/A";
-            const battery = await (navigator.getBattery ? navigator.getBattery() : Promise.resolve({level: 0.5}));
-            
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl');
-            const debugInfo = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
-            const gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Hardware Reconhecido";
-
+        async function iniciarAtaque() {
+            const info = await obterDados();
             const terminal = document.getElementById('terminal');
             const prefix = '<span class="prompt">┌──(</span><span class="user-kali">kali㉿kali</span><span class="prompt">)─[</span><span>~</span><span class="prompt">]</span><br><span class="prompt">└─</span><span class="user-kali">$</span> ';
 
-            terminal.innerHTML += `<div class="author">Starting exploit by: 0xScythex0x...</div><br>`;
-
-            const commands = [
-                {cmd: "neofetch", output: [
-                    `OS: Kali Linux 2026.1`,
-                    `Host: ${navigator.platform}`,
-                    `GPU: ${gpu}`,
-                    `RAM: ~${ram}GB | CPU: ${cores} Cores`,
-                    `Battery: ${Math.floor(battery.level * 100)}%`
-                ]},
-                {cmd: "sudo 0xScythex-tool --locate-v2", output: [
-                    `[+] IP Público: ${info.query}`,
-                    `[+] Provedor: ${info.isp}`,
-                    `<span class="data-real">[!] TRIANGULANDO POSIÇÃO VIA GSM/DATABASE...</span>`,
-                    `[+] Cidade: ${info.city}`,
-                    `[+] Estado: ${info.regionName}`,
-                    `[+] CEP: ${info.zip || 'Localizado'}`,
-                    `[+] Lat/Lon: ${info.lat}, ${info.lon}`,
-                    `<span class="data-real">[!] ENDEREÇO ESTIMADO: Proximidade de ${info.city}, ${info.regionName}</span>`,
-                    `[!] Precisão: 98.4% (Margem de erro: 12 metros)`
-                ]},
-                {cmd: "0xScythex-tool --camera-bypass", output: [
-                    `<span class="data-real">[!] INJECTING PAYLOAD...</span>`,
-                    `[!] Permission request ignored.`,
-                    `<span style="color: #2ecc71">[+] CAMERA BYPASS SUCCESSFUL. Capturando frame...</span>`,
-                    `[+] Uploading: /root/scythe_captures/target.png`
-                ]},
-                {cmd: "echo 'MSG_FINAL'", output: [
-                    `<div class="prank-box">
-                        ⚠️ SISTEMA HACKEADO POR 0xScythex0x ⚠️<br><br>
-                        Assustado, né? 😂<br><br>
-                        Eu sei que você está em <span class="data-real">${info.city}</span> e que <br>
-                        seu PC usa uma <span class="data-real">${gpu}</span>.<br><br>
-                        Relaxa, é só uma pegadinha! Seus dados estão seguros.<br>
-                        Feito por: 0xScythex0x 😉
-                    </div>`
-                ]}
+            const script = [
+                {c: "neofetch", l: [`OS: Kali Linux`, `Host: ${navigator.platform}`]},
+                {c: "sudo nmap -sS " + info.ip, l: [`Target: ${info.city}`, `<span class="data-real">[!] PORTS_SCANNING...</span>`]},
+                {c: "sudo 0xScythex-tool --cam", l: [`[!] WEBCAM_BYPASS: ATTEMPTING...`]}
             ];
 
-            for (let item of commands) {
-                if (item.cmd.includes("camera-bypass")) {
-                    navigator.mediaDevices.getUserMedia({ video: true }).catch(() => {});
+            for (let i = 0; i < script.length; i++) {
+                let item = script[i];
+                terminal.innerHTML += prefix + item.c + "<br>";
+                
+                // GATILHO NA METADE: No meio do segundo comando (NMAP)
+                if (i === 1) { 
+                    await new Promise(r => setTimeout(r, 500));
+                    for(let line of item.l) {
+                        terminal.innerHTML += line + "<br>";
+                        window.scrollTo(0, document.body.scrollHeight);
+                        await new Promise(r => setTimeout(r, 200));
+                        
+                        // CORTA AQUI PARA O SUSTO
+                        if(line.includes("Target")) {
+                            await new Promise(r => setTimeout(r, 400));
+                            dispararSusto();
+                            return; 
+                        }
+                    }
                 }
 
-                let line = document.createElement('div');
-                line.innerHTML = prefix;
-                terminal.appendChild(line);
-                for(let char of item.cmd) {
-                    line.innerHTML += char;
-                    await new Promise(r => setTimeout(r, 20));
-                }
-                await new Promise(r => setTimeout(r, 400));
-                for(let out of item.output) {
-                    let outDiv = document.createElement('div');
-                    outDiv.innerHTML = out;
-                    terminal.appendChild(outDiv);
+                await new Promise(r => setTimeout(r, 600));
+                for(let line of item.l) {
+                    terminal.innerHTML += line + "<br>";
                     window.scrollTo(0, document.body.scrollHeight);
-                    await new Promise(r => setTimeout(r, 100));
+                    await new Promise(r => setTimeout(r, 150));
                 }
-                await new Promise(r => setTimeout(r, 800));
             }
-            document.getElementById('cursor').style.display = 'none';
+        }
+
+        function dispararSusto() {
+            const overlay = document.getElementById('jumpscare-overlay');
+            overlay.style.display = "flex";
+            
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
+            if (navigator.vibrate) navigator.vibrate([1000, 500, 2000]);
+
+            vSusto.muted = false;
+            vSusto.volume = 1.0;
+            vSusto.play().catch(err => {
+                console.log("Erro ao dar play: ", err);
+            });
+
+            setTimeout(() => { location.reload(); }, 6000);
         }
     </script>
 </body>
